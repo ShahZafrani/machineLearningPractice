@@ -38,10 +38,10 @@ def get_most_common(array):
 	return digits.argmax()
 
 def distance(training, test):
-	total = 0
-	for i in range(1, len(test)-1):
-		diff = training[i] - test[i]
-		total += diff**2
+	total = sum((training - test)**2)
+	# for i in range(1, len(test)-1):
+	# 	diff = training[i] - test[i]
+	# 	total += diff**2
 	return np.sqrt(total)
 
 # read data
