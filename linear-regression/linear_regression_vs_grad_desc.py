@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import matptlotlib.pyplot as plt
+import matplotlib.pyplot as plt
 # import the libraries we need
 # print("Libraries {}, {} and {} have been imported".format(np.__name__, pd.__name__, plt.__name__))
 
@@ -18,9 +18,9 @@ test_X = test.drop('label', axis=1).as_matrix()
 
 
 # Hyper Parameters
-learning_rate = 1e-6 # play with this to get different results?
+learning_rate = 1e-10 # play with this to get different results?
 threshold = 0.5 # provided by Dr. Kang
-step_iterations = 100 # how many gradient descent steps to take
+step_iterations = 100000 # how many gradient descent steps to take
 num_features = len(training_X[0])
 
 
@@ -32,10 +32,10 @@ def linear_regression(X, y):
     return np.dot(np.dot(np.linalg.pinv(np.dot(X.transpose(), X)), X.transpose()), y)
 
 def cost(X, y, b): # taken from Dr. Kang's lecture code
-    return np.sum((np.dot(X, b) - np.array(y))**2)
+    return np.square(np.sum(np.dot(X, b) - np.array(y)))
 
 def calculate_gradient_descent_step(X, y, b):
-    return -np.dot(X.transpose(), y) + np.dot(np.dot(X.transpose(), X) ,b)
+    return -np.dot(X.transpose(), y) + np.dot(np.dot(X.transpose(), X), b)
 
 def predict_class(X, b, threshold):
     return np.array(np.dot(X, b) > threshold)
@@ -46,6 +46,8 @@ def calculate_accuracy(X, Y, b, threshold):
     accuracy = float(total / len(Y))
     return accuracy
 
+test_X = normalize(test_X, len(test_X[0]))
+training_X = normalize(training_X, len(test_X[0]))
 
 
 b_optimal = linear_regression(training_X, training_Y)
@@ -64,5 +66,11 @@ for i in range(0, step_iterations):
 
 plt.plot(costs)
 
+# plt.show()
+
+
+print(calculate_accuracy(test_X, test_Y, b_estimate, threshold))
+# print(cost(training_X, training_Y, b_optimal))
+# print(b_estimate)
 
 print("Difference: {}".format(sum(abs(b_optimal - b_estimate))))
