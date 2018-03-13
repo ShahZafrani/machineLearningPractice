@@ -1,4 +1,5 @@
-# kfold_validation.py
+# logistic_regression_kfold.py
+# python 2.7.14
 # logistic-regression with ROC Curve
 # MNIST classify between 6 and 8
 # Shah Zafrani
@@ -10,11 +11,14 @@ import matplotlib.pyplot as plt
 
 def logistic_regression(x, y, steps, lr):
     w = initialize_weights(x.shape[1])
+    costs = []
     for s in range(steps):
-        w = w + lr * gradient_ascent(x, y, w)
-    return w
+        gradient, error = gradient_descent(x, y, w)
+        w = w + lr * gradient
+        costs.append(error)
+    return w, costs
 
-def gradient_ascent(x, y, w):
+def gradient_descent(x, y, w):
     # parts of this function are lifted from https://github.com/michelucci/Logistic-Regression-Explained/blob/master/MNIST%20with%20Logistic%20Regression%20from%20scratch.ipynb
     # array of sigmoid squashed probabilities
     predictions = predict(x, w)
@@ -23,7 +27,9 @@ def gradient_ascent(x, y, w):
     # get error cost by subtracting predictions from ground truths
     error_cost = (predictions - y).transpose()
 
-    return -1.0 / m * np.dot(x.transpose(), error_cost)
+    gradient = -1.0 / m * np.dot(x.transpose(), error_cost)
+
+    return gradient, sum(abs(error_cost))
 
 def sigmoid(z):
     return (1.0/(1.0 + np.exp(-z)))
@@ -37,10 +43,6 @@ def log_likelihood(x, y, w):
     a = sum(-np.log(1 + np.exp(np.dot(x, w))))
     b = sum(np.dot(y, np.dot(x,w)))
     return a + b
-
-# def ll_derivative(x, y, w):
-#     a = -sum(np.dot((1 / (1 + np.exp(np.dot(x,w)))), x))
-#     b = sum(np.dot())
 
 
 def normalize(x):
@@ -79,7 +81,7 @@ def calculate_tpr_and_fpr(test_x, test_y, optmized_w):
             else:
                 fnr += 1
         if (test_y[i] == 0):
-            if(predictions[i] < threshold):
+            if(predictions[i] <= threshold):
                 tnr += 1
             else:
                 fpr += 1
@@ -87,58 +89,66 @@ def calculate_tpr_and_fpr(test_x, test_y, optmized_w):
     fpr = float(fpr) / num_negative
     return tpr, fpr
 
-# hyper-parameters
-num_folds = 10
-learning_rate = 5e-5
-threshold = 0.5
-gradient_descent_steps = 100
+if __name__ == '__main__':
 
-# setting up data
-mnist_data = np.genfromtxt('MNIST_CV.csv', delimiter=',', dtype=int, skip_header=1)
+    # hyper-parameters
+    num_folds = 10
+    learning_rate = 1e-1
+    threshold = 0.5
+    gradient_descent_steps = 500
 
-
-kf = KFold(n_splits=num_folds)
-kf.get_n_splits(mnist_data)
-
-# initialize lists to hold fpr and tpr values to be plotted later
-falsePositiveRates = [0]
-truePositiveRates = [0]
-
-for train_index, test_index in kf.split(mnist_data):
-
-    folded_mnist_training = mnist_data[train_index]
-    folded_mnist_test = mnist_data[test_index]
-    # get labels
-    y_train = rescale_data(np.array(folded_mnist_training[:, 0]))
-    y_test = rescale_data(np.array(folded_mnist_test[:, 0]))
-    # normalize data
-    x_train =  normalize(np.array(folded_mnist_training[:,1:]))
-    x_test = normalize(np.array(folded_mnist_test[:, 1:]))
-
-    optimized_w = logistic_regression(x_train, y_train, gradient_descent_steps, learning_rate)
-
-    tpr, fpr = calculate_tpr_and_fpr(x_test, y_test, optimized_w)
-    truePositiveRates.append(tpr)
-    falsePositiveRates.append(fpr)
-    print("True Positive Rate: {}, False Positive Rate: {}".format(tpr, fpr))
-    # print to make sure folding is working correctly
-    # print("TRAIN:", train_index, "TEST:", test_index)
-    # This will happen 10 times. Do your regression and save TPR and FPR here
-
-# falsePositiveRate = float(sum(falsePositiveRates)) / len(falsePositiveRates)
-# truePositiveRate = float(sum(truePositiveRates)) / len(truePositiveRates)
-falsePositiveRates.sort()
-falsePositiveRates.append(1)
-truePositiveRates.sort()
-truePositiveRates.append(1)
+    # setting up data
+    mnist_data = np.genfromtxt('MNIST_CV.csv', delimiter=',', dtype=int, skip_header=1)
 
 
-plt.title('Receiver Operating Characteristic')
-plt.xlim([0, 1.05])
-plt.ylim([0, 1.05])
-# plt.plot([0,falsePositiveRate,1], [0,truePositiveRate,1])
-plt.plot(falsePositiveRates, truePositiveRates)
-plt.plot([0, 1], [0, 1],'r--')
-plt.ylabel('True Positive Rate')
-plt.xlabel('False Positive Rate')
-plt.show()
+    kf = KFold(n_splits=num_folds)
+    kf.get_n_splits(mnist_data)
+
+    # initialize lists to hold fpr and tpr values to be plotted later
+    falsePositiveRates = [0]
+    truePositiveRates = [0]
+    error_costs = []
+
+    print("Logistic Regression on MNIST 6's and 8's. \nUsing K-Fold Cross-Validation with {} Folds \nLearning Rate: {}    |    Gradient Descent Steps: {}".format(num_folds, learning_rate, gradient_descent_steps))
+
+
+    for train_index, test_index in kf.split(mnist_data):
+
+        folded_mnist_training = mnist_data[train_index]
+        folded_mnist_test = mnist_data[test_index]
+        # get labels
+        y_train = rescale_data(np.array(folded_mnist_training[:, 0]))
+        y_test = rescale_data(np.array(folded_mnist_test[:, 0]))
+        # normalize data
+        x_train =  normalize(np.array(folded_mnist_training[:,1:]))
+        x_test = normalize(np.array(folded_mnist_test[:, 1:]))
+
+        optimized_w, costs = logistic_regression(x_train, y_train, gradient_descent_steps, learning_rate)
+        error_costs.append(costs)
+        tpr, fpr = calculate_tpr_and_fpr(x_test, y_test, optimized_w)
+        truePositiveRates.append(tpr)
+        falsePositiveRates.append(fpr)
+        
+    average_tpr = sum(truePositiveRates)/num_folds
+    average_fpr = sum(falsePositiveRates)/num_folds
+    print("Average True Positive Rate: {} \nAverage False Positive Rate: {}".format(average_tpr, average_fpr))
+
+    falsePositiveRates.sort()
+    falsePositiveRates.append(1)
+    truePositiveRates.sort()
+    truePositiveRates.append(1)
+
+    plt.figure(1)
+    plt.title("Gradient Descent Convergence, fold: 0")
+    plt.plot(error_costs[0])
+
+    plt.figure(2)
+    plt.title('Receiver Operating Characteristic')
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
+    # plt.plot([0,falsePositiveRate,1], [0,truePositiveRate,1])
+    plt.plot(falsePositiveRates, truePositiveRates)
+    plt.plot([0, 1], [0, 1],'r--')
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.show()
