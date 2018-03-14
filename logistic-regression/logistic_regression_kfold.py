@@ -23,7 +23,7 @@ def gradient_descent(x, y, w):
     # array of sigmoid squashed probabilities
     predictions = predict(x, w)
     # number of training cases
-    m = x.shape[0]
+    m = x.shape[1]
     # get error cost by subtracting predictions from ground truths
     error_cost = (predictions - y).transpose()
 
@@ -38,13 +38,6 @@ def predict(features, weights):
     # get probabilities and squash them with the sigmoid function
     return sigmoid(np.dot(features, weights))
 
-def log_likelihood(x, y, w):
-    # from slide 18 of Dr.Kang's logistic regression slides
-    a = sum(-np.log(1 + np.exp(np.dot(x, w))))
-    b = sum(np.dot(y, np.dot(x,w)))
-    return a + b
-
-
 def normalize(x):
     return x / 255.0
 
@@ -56,7 +49,7 @@ def rescale_data(y):
     #     # if it's an 8 we call it a 1
     #     else:
     #         y[i] = 1
-    return (y - 6) / 2
+    return (y - 6) / 2 # this is much more efficient
 
 def initialize_weights(feature_shape):
     # initialize weight vector
@@ -93,30 +86,28 @@ if __name__ == '__main__':
 
     # hyper-parameters
     num_folds = 10
-    learning_rate = 1e-1
+    learning_rate = 1e-2
     threshold = 0.5
-    gradient_descent_steps = 500
+    gradient_descent_steps = 1000
 
     # setting up data
     mnist_data = np.genfromtxt('MNIST_CV.csv', delimiter=',', dtype=int, skip_header=1)
-
 
     kf = KFold(n_splits=num_folds)
     kf.get_n_splits(mnist_data)
 
     # initialize lists to hold fpr and tpr values to be plotted later
-    falsePositiveRates = [0]
-    truePositiveRates = [0]
+    falsePositiveRates = []
+    truePositiveRates = []
     error_costs = []
 
     print("Logistic Regression on MNIST 6's and 8's. \nUsing K-Fold Cross-Validation with {} Folds \nLearning Rate: {}    |    Gradient Descent Steps: {}".format(num_folds, learning_rate, gradient_descent_steps))
-
 
     for train_index, test_index in kf.split(mnist_data):
 
         folded_mnist_training = mnist_data[train_index]
         folded_mnist_test = mnist_data[test_index]
-        # get labels
+        # get and rescale labels
         y_train = rescale_data(np.array(folded_mnist_training[:, 0]))
         y_test = rescale_data(np.array(folded_mnist_test[:, 0]))
         # normalize data
@@ -128,15 +119,15 @@ if __name__ == '__main__':
         tpr, fpr = calculate_tpr_and_fpr(x_test, y_test, optimized_w)
         truePositiveRates.append(tpr)
         falsePositiveRates.append(fpr)
-        
-    average_tpr = sum(truePositiveRates)/num_folds
-    average_fpr = sum(falsePositiveRates)/num_folds
+
+    average_tpr = sum(truePositiveRates)/len(truePositiveRates)
+    average_fpr = sum(falsePositiveRates)/len(falsePositiveRates)
     print("Average True Positive Rate: {} \nAverage False Positive Rate: {}".format(average_tpr, average_fpr))
 
+    falsePositiveRates += [0,1]
     falsePositiveRates.sort()
-    falsePositiveRates.append(1)
+    truePositiveRates += [0,1]
     truePositiveRates.sort()
-    truePositiveRates.append(1)
 
     plt.figure(1)
     plt.title("Gradient Descent Convergence, fold: 0")
