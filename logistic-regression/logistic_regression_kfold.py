@@ -24,12 +24,19 @@ def gradient_descent(x, y, w):
     predictions = predict(x, w)
     # number of training cases
     m = x.shape[1]
-    # get error cost by subtracting predictions from ground truths
-    error_cost = (predictions - y).transpose()
+    # get error surface by subtracting predictions from ground truths
+    error_surface = (predictions - y).transpose()
 
-    gradient = -1.0 / m * np.dot(x.transpose(), error_cost)
+    gradient = -1.0 / m * np.dot(x.transpose(), error_surface)
 
-    return gradient, sum(abs(error_cost))
+    return gradient, cost(predictions, y)
+
+def cost(z, y):
+    # based on the formula in slide 18 from Dr. Kangs cleass
+    positiveCases = -y * np.log(z)
+    negativeCases = -(1-y) * np.log(1-z)
+    errorCost = sum(positiveCases + negativeCases) / len(y)
+    return errorCost
 
 def sigmoid(z):
     return (1.0/(1.0 + np.exp(-z)))
