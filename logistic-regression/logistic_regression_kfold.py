@@ -32,7 +32,7 @@ def gradient_descent(x, y, w):
     return gradient, cost(predictions, y)
 
 def cost(z, y):
-    # based on the formula in slide 18 from Dr. Kangs cleass
+    # based on the formula in slide 18 from Dr. Kangs class
     positiveCases = -y * np.log(z)
     negativeCases = -(1-y) * np.log(1-z)
     errorCost = sum(positiveCases + negativeCases) / len(y)
