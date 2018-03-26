@@ -20,12 +20,15 @@ def softmax(x):
 
 num_steps = 1000
 learning_rate = 1e-2
-input_layer = np.ones([784])
-hidden_layer = np.ones([392])
-output_layer = np.ones([10])
+input_size = 784
+hidden_size = 30
+output_size = 10
+input_layer = np.ones([input_size])
+hidden_layer = np.ones([hidden_size])
+output_layer = np.ones([output_size])
 
-input_to_hidden_synapses = np.random.randn(784, 392)
-hidden_to_output_synapses = np.random.randn(392, 10)
+input_to_hidden_synapses = np.random.randn(input_size, hidden_size)
+hidden_to_output_synapses = np.random.randn(hidden_size, output_size)
 
 # print(softmax([2,2,4]), sum(softmax([2,2,4])))
 
@@ -33,7 +36,7 @@ mnist_data = np.genfromtxt('MNIST.csv', delimiter=',', dtype=int, skip_header=1)
 
 labels = mnist_data[:, 0]
 mnist_data = normalize(mnist_data[:, 1:])
-l1 = np.zeros(392)
+l1 = np.zeros(30)
 for i in range(input_to_hidden_synapses.shape[1]):
     l1[i] = sigmoid(np.dot(input_layer, input_to_hidden_synapses.T[i]))
 # print(l1)
