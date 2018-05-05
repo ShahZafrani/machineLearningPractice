@@ -18,9 +18,9 @@ test_X = test.drop('label', axis=1).as_matrix()
 
 
 # Hyper Parameters
-learning_rate = 1e-10 # play with this to get different results?
+learning_rate = 1e-4 # play with this to get different results?
 threshold = 0.5 # provided by Dr. Kang
-step_iterations = 100000 # how many gradient descent steps to take
+step_iterations = 100 # how many gradient descent steps to take
 num_features = len(training_X[0])
 
 
@@ -42,7 +42,7 @@ def predict_class(X, b, threshold):
 
 def calculate_accuracy(X, Y, b, threshold):
     total = sum(predict_class(X, b, threshold) == Y)
-    print("total: {}".format(total))
+    # print("total: {}".format(total))
     accuracy = float(total / len(Y))
     return accuracy
 
@@ -66,7 +66,7 @@ for i in range(0, step_iterations):
 
 plt.plot(costs)
 
-# plt.show()
+plt.show()
 
 
 print(calculate_accuracy(test_X, test_Y, b_estimate, threshold))

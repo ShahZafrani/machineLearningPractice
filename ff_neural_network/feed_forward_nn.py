@@ -43,9 +43,9 @@ def softmax(x, derivative=False):
 
 if __name__ == "__main__":
     num_steps = 10 #1000
-    learning_rate = .5
-    num_mini_batches = 10
-    num_folds = 10 #10
+    learning_rate = 1e-2
+    num_mini_batches = 25
+    num_folds = 2 #10
     input_size = 784
     hidden_size = 28
     output_size = 10
@@ -111,27 +111,28 @@ if __name__ == "__main__":
                     # compute error signals
                     batch_cost = 0
                     for a in range(len(activations)):
-                        cross_entropy = (np.array(activations[a][3]) - np.array(train_labels[a]))
-                        batch_cost += (sum(cross_entropy))
+                        mean_square_error = (np.array(train_labels[a]) - np.array(activations[a][3])) ** 2
+                        batch_cost += (sum(abs(mean_square_error)))
                         hidden_signal = np.zeros(shape=(hidden_size, output_size))
                         input_signal = np.zeros(shape=(input_size, hidden_size))
 
-                        output_weights += (learning_rate * cross_entropy)
+                        output_weights -= (learning_rate * mean_square_error)
                         for i in range(hidden_size):
                             for j in range(output_size):
-                                hidden_signal[i, j] = sigmoid(np.dot(cross_entropy[j], activations[a][1][i]), derivative=True)
-                        hidden_to_output_synapses += (learning_rate * hidden_signal)
+                                hidden_signal[i, j] = sigmoid(np.dot(mean_square_error[j], activations[a][1][i]), derivative=True)
+                        hidden_to_output_synapses -= (learning_rate * hidden_signal)
 
                         for i in range(input_size):
                             for j in range(hidden_size):
                                 input_signal[i] += np.dot(sum(sigmoid(hidden_signal[j], derivative=True)), activations[a][0][i])
-                        input_to_hidden_synapses += (learning_rate * input_signal)
+                        input_to_hidden_synapses -= (learning_rate * input_signal)
                     iterator = 0
                     correct = 0
                     activations = []
                     outputs = []
                     train_labels = []
                     error_costs.append(batch_cost)
+                    print("batch cost: {}".format(batch_cost))
         plt.title("Gradient Descent Convergence")
         plt.plot(error_costs)
 
