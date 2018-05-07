@@ -1,4 +1,4 @@
-# Code is 99% from this tutorial: https://www.tensorflow.org/tutorials/layers
+# Code is mostly from this tutorial: https://www.tensorflow.org/tutorials/layers
 
 from __future__ import absolute_import
 from __future__ import division
@@ -10,9 +10,6 @@ import tensorflow as tf
 
 from tensorflow.examples.tutorials.mnist import input_data
 
-tf.logging.set_verbosity(tf.logging.INFO)
-
-# Our application logic will be added here
 def cnn_model_fn(features, labels, mode):
   """Model function for CNN."""
   # Input Layer
@@ -36,9 +33,21 @@ def cnn_model_fn(features, labels, mode):
       kernel_size=[5, 5],
       padding="same",
       activation=tf.nn.relu)
+
+
   pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
+  # # I tried to add a third layer. It didn't work out.
+  # conv3 = tf.layers.conv2d(
+  #   inputs=pool2,
+  #   filters=128,
+  #   kernel_size=[5, 5],
+  #   padding="same",
+  #   activation=tf.nn.relu)
+  # pool3 = tf.layers.max_pooling2d(inputs=conv3, pool_size=[2, 2], strides=2)
+
   # Dense Layer
+  # pool2_flat = tf.reshape(pool3, [-1, 7 * 7 * 64])
   pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
   dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
   dropout = tf.layers.dropout(
@@ -85,10 +94,15 @@ def main(unused_argv):
   eval_data = mnist.test.images # Returns np.array
   eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
   # Create the Estimator
-  mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="/tmp/mnist_convnet_model")
+  mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="/output/mnist_convnet_model")
   # Set up logging for predictions
   tensors_to_log = {"probabilities": "softmax_tensor"}
   logging_hook = tf.train.LoggingTensorHook(tensors=tensors_to_log, every_n_iter=50)
+
+  # I added code for tensorboard to work.
+  merged = tf.summary.merge_all()
+  train_writer = tf.summary.FileWriter('/output/train')
+  test_writer = tf.summary.FileWriter('/output/test')
   # Train the model
   train_input_fn = tf.estimator.inputs.numpy_input_fn(x={"x": train_data}, y=train_labels, batch_size=100, num_epochs=None, shuffle=True)
   mnist_classifier.train(input_fn=train_input_fn, steps=20000, hooks=[logging_hook])
